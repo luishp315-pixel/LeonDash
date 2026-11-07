@@ -15,10 +15,25 @@ android {
         versionName = "1.0"
     }
 
+    // El almacén de claves se genera en GitHub Actions en cada compilación (no se sube al repo)
+    val ksPath = System.getenv("LEONDASH_KEYSTORE")
+    val ksPass = System.getenv("LEONDASH_KEYSTORE_PASS")
+    if (ksPath != null && ksPass != null) {
+        signingConfigs {
+            create("ci") {
+                storeFile = file(ksPath)
+                storePassword = ksPass
+                keyAlias = "leondash"
+                keyPassword = ksPass
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (ksPath != null && ksPass != null) signingConfigs.getByName("ci")
+                            else signingConfigs.getByName("debug")
         }
     }
     compileOptions {

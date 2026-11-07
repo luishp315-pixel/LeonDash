@@ -11,8 +11,15 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-      - run: chmod +x gradlew && ./gradlew :app:assembleDebug
+      - name: Generar clave de firma temporal
+        run: |
+          echo "LEONDASH_KEYSTORE_PASS=$(openssl rand -hex 16)" >> "$GITHUB_ENV"
+      - name: Compilar
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/ks.jks" -storepass "$LEONDASH_KEYSTORE_PASS" -keypass "$LEONDASH_KEYSTORE_PASS" -alias leondash -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Leon Dash, C=ES"
+          export LEONDASH_KEYSTORE="$RUNNER_TEMP/ks.jks"
+          chmod +x gradlew && ./gradlew :app:assembleRelease
       - uses: actions/upload-artifact@v4
         with:
           name: LeonDash-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: app/build/outputs/apk/release/*.apk
